@@ -6,3 +6,8 @@ CONFIG += c++11
 
 SOURCES += main.cpp
 
+LIBS += -lpthread
+
+HEADERS += \
+    threadsafequeue.h
+
