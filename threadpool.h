@@ -29,6 +29,18 @@ namespace threads {
       Joiner  joiner_;
   };
 
+  /*!
+   * \brief Method for adding task to the one free thread.
+   *        If you want to add task with parameters, you should use std::bind.
+   *        Example: pool.AddTask(std::bind(sum, 1, 2));
+   *
+   * \param f function or object with operator().
+   * \return std::future object with calculation result.
+   *         For get result use std::future::get.
+   *         Example:
+   *         auto fut = pool.AddTask(std::bind(sum, 1, 2));
+   *         auto s = fut.get(); // s == 3
+   */
   template <class F>
   std::future<typename std::result_of<F()>::type> ThreadPool::AddTask(F f)
   {
