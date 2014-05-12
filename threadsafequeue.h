@@ -9,21 +9,21 @@
 namespace threads {
 
   template <class T>
-  class threadsafe_queue
+  class ThreadsafeQueue
   {
     public:
-      threadsafe_queue();
-      threadsafe_queue(const threadsafe_queue &) = delete;
-      threadsafe_queue &operator =(const threadsafe_queue &) = delete;
+      ThreadsafeQueue();
+      ThreadsafeQueue(const ThreadsafeQueue &) = delete;
+      ThreadsafeQueue &operator =(const ThreadsafeQueue &) = delete;
 
-      std::shared_ptr<T> try_pop();
-      bool try_pop(T &value);
+      std::shared_ptr<T> TryPop();
+      bool TryPop(T &value);
 
-      std::shared_ptr<T> wait_and_pop();
-      void wait_and_pop(T &value);
+      std::shared_ptr<T> WaitAndPop();
+      void WaitAndPop(T &value);
 
-      void push(T value);
-      void is_empty();
+      void Push(T value);
+      bool IsEmpty();
 
     private:
       struct Node {
@@ -48,41 +48,41 @@ namespace threads {
   };
 
   template <class T>
-  threadsafe_queue<T>::threadsafe_queue()
+  ThreadsafeQueue<T>::ThreadsafeQueue()
     : head_(new Node)
     , tail_(head_.get())
   {
   }
 
   template <class T>
-  std::shared_ptr<T> threadsafe_queue<T>::try_pop()
+  std::shared_ptr<T> ThreadsafeQueue<T>::TryPop()
   {
     std::unique_ptr<Node> old_head = try_pop_head();
     return (old_head ? old_head->data_ : std::shared_ptr<T>());
   }
 
   template <class T>
-  bool threadsafe_queue<T>::try_pop(T &value)
+  bool ThreadsafeQueue<T>::TryPop(T &value)
   {
     std::unique_ptr<Node> const old_head = try_pop_head(value);
-    return old_head;
+    return old_head.operator bool();
   }
 
   template <class T>
-  std::shared_ptr<T> threadsafe_queue::wait_and_pop()
+  std::shared_ptr<T> ThreadsafeQueue<T>::WaitAndPop()
   {
     std::unique_ptr<Node> const old_head = wait_pop_head();
     return old_head->data_;
   }
 
   template <class T>
-  void threadsafe_queue<T>::wait_and_pop(T &value)
+  void ThreadsafeQueue<T>::WaitAndPop(T &value)
   {
     std::unique_ptr<Node> const old_head = wait_pop_head(value);
   }
 
   template <class T>
-  void threadsafe_queue<T>::push(T value)
+  void ThreadsafeQueue<T>::Push(T value)
   {
     std::shared_ptr<T> new_data(std::make_shared<T>(std::move(value)));
 
@@ -98,14 +98,15 @@ namespace threads {
     data_cond_.notify_one();
   }
 
-  void threadsafe_queue::is_empty()
+  template <class T>
+  bool ThreadsafeQueue<T>::IsEmpty()
   {
     std::lock_guard<std::mutex> head_lock(head_mutex_);
     return (head_.get() == get_tail());
   }
 
   template <class T>
-  std::unique_ptr<threadsafe_queue<T>::Node> threadsafe_queue<T>::pop_head()
+  std::unique_ptr<typename ThreadsafeQueue<T>::Node> ThreadsafeQueue<T>::pop_head()
   {
     std::unique_ptr<Node> old_head = std::move(head_);
     head_ = std::move(old_head->next_);
@@ -113,7 +114,7 @@ namespace threads {
   }
 
   template <class T>
-  std::unique_lock<std::mutex> threadsafe_queue<T>::wait_for_data()
+  std::unique_lock<std::mutex> ThreadsafeQueue<T>::wait_for_data()
   {
     std::unique_lock<std::mutex> head_lock(head_mutex_);
     data_cond_.wait(head_lock, [&]{ return head_.get() != get_tail(); });
@@ -121,14 +122,14 @@ namespace threads {
   }
 
   template <class T>
-  std::unique_ptr<threadsafe_queue<T>::Node> threadsafe_queue<T>::wait_pop_head()
+  std::unique_ptr<typename ThreadsafeQueue<T>::Node> ThreadsafeQueue<T>::wait_pop_head()
   {
     std::unique_lock<std::mutex> head_lock(wait_for_data());
     return pop_head();
   }
 
   template <class T>
-  std::unique_ptr<threadsafe_queue<T>::Node> threadsafe_queue<T>::wait_pop_head(T &value)
+  std::unique_ptr<typename ThreadsafeQueue<T>::Node> ThreadsafeQueue<T>::wait_pop_head(T &value)
   {
     std::unique_lock<std::mutex> head_lock(wait_for_data());
     value = std::move(*head_->data_);
@@ -136,7 +137,7 @@ namespace threads {
   }
 
   template <class T>
-  std::unique_ptr<threadsafe_queue<T>::Node> threadsafe_queue<T>::try_pop_head()
+  std::unique_ptr<typename ThreadsafeQueue<T>::Node> ThreadsafeQueue<T>::try_pop_head()
   {
     std::lock_guard<std::mutex> head_lock(head_mutex_);
 
@@ -146,7 +147,7 @@ namespace threads {
   }
 
   template <class T>
-  std::unique_ptr<threadsafe_queue<T>::Node> threadsafe_queue<T>::try_pop_head(T &value)
+  std::unique_ptr<typename ThreadsafeQueue<T>::Node> ThreadsafeQueue<T>::try_pop_head(T &value)
   {
     std::lock_guard<std::mutex> head_lock(head_mutex_);
 
@@ -157,9 +158,9 @@ namespace threads {
   }
 
   template <class T>
-  threadsafe_queue<T>::Node *threadsafe_queue<T>::get_tail()
+  typename ThreadsafeQueue<T>::Node *ThreadsafeQueue<T>::get_tail()
   {
-    std::lock_guard<std::mutex> tail_lock(tail_mutex);
+    std::lock_guard<std::mutex> tail_lock(tail_mutex_);
     return tail_;
   }
 
