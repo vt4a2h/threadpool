@@ -9,6 +9,11 @@ namespace threads {
 
   Joiner::~Joiner()
   {
+    JoinAll();
+  }
+
+  void Joiner::JoinAll()
+  {
     for (auto &thread : threads_)
       if (thread.joinable()) thread.join();
   }

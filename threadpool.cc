@@ -2,9 +2,9 @@
 
 namespace threads {
 
-  ThreadPool::ThreadPool(size_t threads_count)
+  ThreadPool::ThreadPool(size_t max_threads_count)
     : done_(false)
-    , threads_count_(threads_count ? threads_count : std::thread::hardware_concurrency())
+    , threads_count_(max_threads_count ? max_threads_count : std::thread::hardware_concurrency())
     , joiner_(threads_)
   {
     try {

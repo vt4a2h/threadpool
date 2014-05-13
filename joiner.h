@@ -14,6 +14,8 @@ namespace threads {
       Joiner(Threads &threads);
       ~Joiner();
 
+      void JoinAll();
+
     private:
       Threads &threads_;
   };
