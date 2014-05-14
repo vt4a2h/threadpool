@@ -30,7 +30,7 @@ namespace threads {
   };
 
   /*!
-   * \brief Method for adding task to the one free thread.
+   * \brief Method for adding task to the queue.
    *        If you want to add task with parameters, you should use std::bind.
    *        Example:
    *          pool.AddTask(std::bind(sum, 1, 2));
